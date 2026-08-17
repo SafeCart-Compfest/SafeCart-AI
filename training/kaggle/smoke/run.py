@@ -10,7 +10,7 @@ from pathlib import Path
 REPOSITORY_URL = "https://github.com/SafeCart-Compfest/SafeCart-AI.git"
 GIT_SHA = "1bcbe4c19723f91d449001fc7a1e2f35f9d91f8f"
 EXPECTED_PAIRS_SHA256 = "a2016a60458c3bed4edcc8ad5902ead2dd2f615ebcc2f0166956829ee4ba42f1"
-PAIRS_PATH = Path("/kaggle/input/safecart-product-pairs-v1/product-pairs.csv")
+KAGGLE_INPUT_PATH = Path("/kaggle/input")
 REPOSITORY_PATH = Path("/kaggle/working/SafeCart-AI")
 OUTPUT_PATH = Path("/kaggle/working/safecart-matcher-smoke")
 
@@ -27,10 +27,24 @@ def sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def find_pairs_path() -> Path:
+    candidates = sorted(KAGGLE_INPUT_PATH.rglob("product-pairs.csv"))
+    if len(candidates) != 1:
+        mounted_files = sorted(
+            path.relative_to(KAGGLE_INPUT_PATH).as_posix()
+            for path in KAGGLE_INPUT_PATH.rglob("*")
+            if path.is_file()
+        )
+        raise FileNotFoundError(
+            f"Expected one product-pairs.csv, found {len(candidates)}; "
+            f"mounted files: {mounted_files[:20]}"
+        )
+    return candidates[0]
+
+
 def main() -> None:
-    if not PAIRS_PATH.is_file():
-        raise FileNotFoundError(f"Missing Kaggle input: {PAIRS_PATH}")
-    actual_hash = sha256(PAIRS_PATH)
+    pairs_path = find_pairs_path()
+    actual_hash = sha256(pairs_path)
     if actual_hash != EXPECTED_PAIRS_SHA256:
         raise RuntimeError(f"Pair dataset hash mismatch: {actual_hash}")
 
@@ -57,7 +71,7 @@ def main() -> None:
         sys.executable,
         "-m",
         "safecart_ai.cli.train_matcher",
-        str(PAIRS_PATH),
+        str(pairs_path),
         "--config",
         str(REPOSITORY_PATH / "training/configs/distilmbert-smoke.toml"),
         "--output",
