@@ -1,7 +1,7 @@
 # SafeCart AI
 
 Internal AI service and reproducible experimentation code for SafeCart, an
-evidence-grounded marketplace listing identity assessment system for COMPFEST 18 AIC.
+marketplace product identity matching system for COMPFEST 18 AIC.
 
 SafeCart AI compares identity information extracted from a marketplace screenshot with
 versioned BPOM records. It does **not** determine whether a product is authentic, safe,
@@ -11,7 +11,7 @@ or legal.
 
 This repository owns:
 
-- BPOM source manifests, verification, normalization, and canonical catalog builders;
+- BPOM source manifests, verification, normalization, and product catalog builders;
 - leakage-safe pair generation and retrieval evaluation;
 - OCR, entity extraction, matching, calibration, and model export code;
 - the private HTTP inference boundary used by `SafeCart-API`;
@@ -25,16 +25,16 @@ composition, raw datasets, screenshots, or model weights. The PWA must call
 
 ```text
 verified BPOM snapshots
-  -> canonical product catalog
+  -> normalized BPOM product catalog
   -> product-family split
-  -> leakage-safe positive and hard-negative pairs
+  -> leakage-safe match and mismatch pairs
   -> hybrid retrieval baseline
-  -> matcher, calibration, and deterministic evidence policy
+  -> matcher, calibration, and decision rules
 ```
 
 The current private endpoint is a deterministic baseline used for integration and
-golden tests. OCR and the fine-tuned cross-encoder will replace its client-supplied
-fixture input only after their acceptance gates pass.
+scenario tests. OCR and the fine-tuned cross-encoder will replace its client-supplied
+fixture input only after their required checks pass.
 
 ## Local development
 
@@ -72,7 +72,7 @@ uv run safecart-ai-train-matcher data/processed/product-pairs.csv \
   --output outputs/distilmbert-v1
 ```
 
-Do not use the frozen test split to choose features, models, or thresholds.
+Do not use the final test split to choose features, models, or thresholds.
 
 ## Validation
 
@@ -100,11 +100,11 @@ only its independently deployable image.
 ## Repository map
 
 - `src/safecart_ai/`: tested service and experiment implementation.
-- `tests/`: unit, contract, leakage, and golden tests.
+- `tests/`: unit, contract, leakage, and scenario tests.
 - `training/`: thin Kaggle launchers and versioned training configurations.
-- `data/manifests/`: source provenance and integrity metadata.
+- `data/manifests/`: source, license, and integrity metadata.
 - `data/samples/`: small synthetic or explicitly redistributable fixtures.
 - `artifacts/manifests/`: model artifact metadata and checksums, never weights.
-- `docs/`: architecture, data, annotation, evaluation, and limitation documents.
+- `docs/`: architecture, data, evaluation, and limitation documents.
 
 See `CONTRIBUTING.md` for the protected-branch workflow.

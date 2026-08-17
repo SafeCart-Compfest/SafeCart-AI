@@ -45,7 +45,7 @@
     }
   },
   "limitations": [
-    "Metrics use generated positive pairs, not the frozen real-listing gold test set.",
+    "Metrics use generated positive pairs, not the final real-listing evaluation set.",
     "Timing is a single run on one development machine and is not a p95 service benchmark.",
     "No threshold or model decision was selected from the synthetic test split."
   ]

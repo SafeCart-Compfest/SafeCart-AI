@@ -34,5 +34,5 @@ be misleading.
 
 Before the bounded full run, add manually reviewed real marketplace cases, OCR-degraded
 text, same-NIE variant/package contradictions, missing-NIE cases, and edit-similar hard
-negatives. Model selection may use the expanded train/dev data; calibration and frozen
+cases. Model selection may use the expanded train/dev data; calibration and final
 test data remain untouched.

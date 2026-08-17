@@ -6,7 +6,7 @@ This private Kaggle run validates that the pinned training pipeline can execute 
 Tesla T4, verify its input dataset, train the multilingual cross-encoder, and export a
 hashed run manifest and model files. It is not a model-selection or acceptance-gate run.
 
-## Reproducibility evidence
+## Run details
 
 - Kernel: `ryuorlandotamin/safecart-matcher-smoke-v1`, version 4.
 - Source commit: `4c406c7e7db005c1eb15fd0bef3de5f676ebe1ef`.
@@ -29,10 +29,10 @@ Git.
 The pipeline completed and produced the expected artifacts. The tiny dev split scored
 macro-F1 0.2381 with confusion matrix `[[15, 0], [33, 0]]` in label order
 `MATCH`, `MISMATCH`. This weak result is expected from a one-epoch, 96-row technical
-smoke and must not be presented as model quality evidence.
+smoke and must not be presented as a model quality result.
 
 The full synthetic dev set is already saturated by deterministic rules, so a larger
 fine-tuning run would currently spend GPU budget without answering the competition
-hypothesis. The next valid gate is acquisition and dual annotation of real marketplace
-hard negatives and insufficient-evidence cases. Model selection remains blocked until
-that evaluation set exists and is frozen.
+hypothesis. The next valid step is collecting two independent reviews for real marketplace
+mismatch and insufficient-evidence cases. Model selection remains blocked until that
+evaluation set exists and is finalized.

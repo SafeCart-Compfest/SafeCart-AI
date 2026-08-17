@@ -5,13 +5,13 @@
 Measure whether hybrid retrieval returns the source BPOM record in the reranking set,
 and verify that exact NIE lookup is not hiding weak lexical retrieval.
 
-These are **synthetic-dev** results. They are engineering evidence only and are not the
-headline real-listing gold-test result.
+These are **synthetic-dev** results. They are engineering checks only and are not the
+headline real-listing evaluation result.
 
 ## Reproducibility
 
 - Split: `dev`; seed: `42`; sampled positive queries: 1,000.
-- Canonical records: 275,582.
+- Normalized BPOM records: 275,582.
 - Catalog SHA-256: `298e5fc5b08ae7901dd0b7912bdffd764cd505d71b2a25104cce7faa0d2014ca`.
 - Pair SHA-256: `a2016a60458c3bed4edcc8ad5902ead2dd2f615ebcc2f0166956829ee4ba42f1`.
 - CI: percentile bootstrap, 2,000 resamples.
@@ -41,6 +41,6 @@ the global index is retained because the cross-encoder consumes top-5 candidates
 - Generated positives are cleaner than marketplace OCR and must not stand in for real
   screenshots.
 - Mean timing is not p95 end-to-end latency and excludes OCR/model inference.
-- The frozen synthetic-test split and future gold-test set were not inspected.
+- The final synthetic-test split and future real-listing evaluation set were not inspected.
 - Next, benchmark exact, deterministic, pretrained, and fine-tuned pair classification
   on the same leakage-safe dev contract.

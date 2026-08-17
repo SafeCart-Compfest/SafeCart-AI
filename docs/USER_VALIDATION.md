@@ -15,7 +15,7 @@ User validation is required before claiming business adoption or workflow fit.
 2. Which fields cause the most corrections: NIE, product name, variant, size, claim, or
    packaging?
 3. How often is a valid NIE copied to the wrong product or variant?
-4. What evidence is required before rejecting or escalating a listing?
+4. What information is required before rejecting or escalating a listing?
 5. What is the cost of a false alarm compared with a missed mismatch?
 6. Would a screenshot upload fit the workflow, or is CSV/catalog integration required?
 7. Which output wording is useful and legally safe?
@@ -23,11 +23,11 @@ User validation is required before claiming business adoption or workflow fit.
 
 Do not lead the interviewee by first explaining the proposed AI architecture.
 
-## Evidence to preserve
+## Validation records to preserve
 
 - Interview role and relevant workflow, without unnecessary personal data.
 - Date, consent status, and anonymized notes.
-- Direct problem evidence, current workaround, and a falsifiable adoption condition.
+- Direct problem examples, current workaround, and a testable adoption condition.
 - Product decisions changed by the interview.
 
 ## Go/no-go signal
@@ -35,4 +35,4 @@ Do not lead the interviewee by first explaining the proposed AI architecture.
 Proceed with pre-listing compliance as the primary persona if at least three relevant
 participants independently describe identity verification or listing correction as a
 real recurring task. If they do not, reposition the MVP toward moderator triage or
-consumer evidence without inventing demand.
+consumer feedback without inventing demand.

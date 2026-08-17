@@ -8,7 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 LABELS = {"MATCH", "MISMATCH", "INSUFFICIENT_EVIDENCE"}
-ROUNDS = {"independent", "adjudication"}
+REVIEW_STAGES = {"initial", "resolution"}
 READABILITY_VALUES = {"READABLE", "PARTIALLY_READABLE", "UNREADABLE"}
 REASON_CODES = {
     "BRAND_MISMATCH",
@@ -33,8 +33,8 @@ REQUIRED_COLUMNS = {
     "captured_at",
     "image_private_path",
     "image_sha256",
-    "annotator_id",
-    "annotation_round",
+    "reviewer_id",
+    "review_stage",
     "label",
     "reason_codes",
     "listing_nie",
@@ -78,32 +78,32 @@ _LABEL_REASON_CODES = {
 }
 
 
-class AnnotationValidationError(ValueError):
-    """Raised when a gold annotation file violates its contract."""
+class EvaluationDatasetError(ValueError):
+    """Raised when an evaluation dataset violates its CSV contract."""
 
 
 def _reason_codes(value: str, row_number: int) -> list[str]:
     codes = [code.strip() for code in value.split(";") if code.strip()]
     if not codes:
-        raise AnnotationValidationError(f"row {row_number}: reason_codes is required")
+        raise EvaluationDatasetError(f"row {row_number}: reason_codes is required")
     unknown = sorted(set(codes) - REASON_CODES)
     if unknown:
-        raise AnnotationValidationError(
+        raise EvaluationDatasetError(
             f"row {row_number}: unsupported reason codes: {', '.join(unknown)}"
         )
     return codes
 
 
-def load_annotation_rows(path: Path) -> list[dict[str, str]]:
+def load_evaluation_rows(path: Path) -> list[dict[str, str]]:
     with path.open(encoding="utf-8-sig", newline="") as stream:
         reader = csv.DictReader(stream)
         columns = set(reader.fieldnames or [])
         missing = sorted(REQUIRED_COLUMNS - columns)
         if missing:
-            raise AnnotationValidationError(f"missing required columns: {', '.join(missing)}")
+            raise EvaluationDatasetError(f"missing required columns: {', '.join(missing)}")
         rows = [{key: (value or "").strip() for key, value in row.items()} for row in reader]
     if not rows:
-        raise AnnotationValidationError("annotation file contains no rows")
+        raise EvaluationDatasetError("evaluation dataset contains no rows")
     return rows
 
 
@@ -114,32 +114,32 @@ def _validate_row(row: dict[str, str], row_number: int) -> None:
         "captured_at",
         "image_private_path",
         "image_sha256",
-        "annotator_id",
+        "reviewer_id",
     ):
         if not row[field]:
-            raise AnnotationValidationError(f"row {row_number}: {field} is required")
+            raise EvaluationDatasetError(f"row {row_number}: {field} is required")
     if row["label"] not in LABELS:
-        raise AnnotationValidationError(f"row {row_number}: unsupported label")
-    if row["annotation_round"] not in ROUNDS:
-        raise AnnotationValidationError(f"row {row_number}: unsupported annotation_round")
+        raise EvaluationDatasetError(f"row {row_number}: unsupported label")
+    if row["review_stage"] not in REVIEW_STAGES:
+        raise EvaluationDatasetError(f"row {row_number}: unsupported review_stage")
     if not _SHA256.fullmatch(row["image_sha256"]):
-        raise AnnotationValidationError(f"row {row_number}: invalid image_sha256")
+        raise EvaluationDatasetError(f"row {row_number}: invalid image_sha256")
     try:
         datetime.fromisoformat(row["captured_at"].replace("Z", "+00:00"))
     except ValueError as error:
-        raise AnnotationValidationError(
-            f"row {row_number}: captured_at must be ISO 8601"
-        ) from error
+        raise EvaluationDatasetError(f"row {row_number}: captured_at must be ISO 8601") from error
     codes = set(_reason_codes(row["reason_codes"], row_number))
     if not codes <= _LABEL_REASON_CODES[row["label"]]:
-        raise AnnotationValidationError(
+        raise EvaluationDatasetError(
             f"row {row_number}: reason codes do not support label {row['label']}"
         )
     if row["readability"] not in READABILITY_VALUES:
-        raise AnnotationValidationError(f"row {row_number}: unsupported readability")
+        raise EvaluationDatasetError(f"row {row_number}: unsupported readability")
 
 
-def audit_annotations(rows: list[dict[str, str]], *, freeze: bool = False) -> dict[str, object]:
+def validate_evaluation_dataset(
+    rows: list[dict[str, str]], *, final: bool = False
+) -> dict[str, object]:
     grouped: dict[str, list[dict[str, str]]] = defaultdict(list)
     for row_number, row in enumerate(rows, start=2):
         _validate_row(row, row_number)
@@ -148,48 +148,46 @@ def audit_annotations(rows: list[dict[str, str]], *, freeze: bool = False) -> di
     final_labels: Counter[str] = Counter()
     agreements = 0
     disagreements = 0
-    adjudicated = 0
+    resolved = 0
     incomplete: list[str] = []
 
     for sample_id, sample_rows in sorted(grouped.items()):
-        independent = [row for row in sample_rows if row["annotation_round"] == "independent"]
-        adjudications = [row for row in sample_rows if row["annotation_round"] == "adjudication"]
+        initial_reviews = [row for row in sample_rows if row["review_stage"] == "initial"]
+        resolutions = [row for row in sample_rows if row["review_stage"] == "resolution"]
         stable_fields = ("source_url", "captured_at", "image_private_path", "image_sha256")
         for field in stable_fields:
             if len({row[field] for row in sample_rows}) != 1:
-                raise AnnotationValidationError(
-                    f"sample {sample_id}: inconsistent {field} across annotations"
+                raise EvaluationDatasetError(
+                    f"sample {sample_id}: inconsistent {field} across reviews"
                 )
-        if len(independent) != 2 or len({row["annotator_id"] for row in independent}) != 2:
+        if len(initial_reviews) != 2 or len({row["reviewer_id"] for row in initial_reviews}) != 2:
             incomplete.append(sample_id)
             continue
-        if len(adjudications) > 1:
-            raise AnnotationValidationError(
-                f"sample {sample_id}: at most one adjudication is allowed"
-            )
+        if len(resolutions) > 1:
+            raise EvaluationDatasetError(f"sample {sample_id}: at most one resolution is allowed")
 
-        independent_labels = {row["label"] for row in independent}
-        if len(independent_labels) == 1:
+        initial_labels = {row["label"] for row in initial_reviews}
+        if len(initial_labels) == 1:
             agreements += 1
-            final_label = next(iter(independent_labels))
+            final_label = next(iter(initial_labels))
         else:
             disagreements += 1
-            if not adjudications:
+            if not resolutions:
                 incomplete.append(sample_id)
                 continue
-            adjudicated += 1
-            final_label = adjudications[0]["label"]
+            resolved += 1
+            final_label = resolutions[0]["label"]
         final_labels[final_label] += 1
 
-    if freeze:
+    if final:
         if incomplete:
-            raise AnnotationValidationError(
-                "cannot freeze incomplete samples: " + ", ".join(incomplete)
+            raise EvaluationDatasetError(
+                "cannot finalize incomplete samples: " + ", ".join(incomplete)
             )
         observed = {label: final_labels[label] for label in sorted(LABELS)}
         if observed != TARGET_LABEL_COUNTS:
-            raise AnnotationValidationError(
-                f"freeze composition mismatch: expected {TARGET_LABEL_COUNTS}, got {observed}"
+            raise EvaluationDatasetError(
+                f"final composition mismatch: expected {TARGET_LABEL_COUNTS}, got {observed}"
             )
 
     completed = sum(final_labels.values())
@@ -201,17 +199,17 @@ def audit_annotations(rows: list[dict[str, str]], *, freeze: bool = False) -> di
         "completed_samples": completed,
         "incomplete_sample_ids": incomplete,
         "final_label_counts": {label: final_labels[label] for label in sorted(LABELS)},
-        "independent_agreements": agreements,
-        "independent_disagreements": disagreements,
-        "adjudicated_disagreements": adjudicated,
-        "raw_agreement_rate": agreement_rate,
-        "freeze_validated": freeze,
+        "review_agreements": agreements,
+        "review_disagreements": disagreements,
+        "resolved_disagreements": resolved,
+        "agreement_rate": agreement_rate,
+        "final_validation_passed": final,
     }
 
 
-def annotation_audit_json(path: Path, *, freeze: bool = False) -> str:
+def evaluation_report_json(path: Path, *, final: bool = False) -> str:
     return json.dumps(
-        audit_annotations(load_annotation_rows(path), freeze=freeze),
+        validate_evaluation_dataset(load_evaluation_rows(path), final=final),
         ensure_ascii=False,
         indent=2,
         sort_keys=True,

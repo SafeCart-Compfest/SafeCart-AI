@@ -1,8 +1,8 @@
-# Gold evaluation annotation guide
+# Evaluation dataset
 
-## Claim being labeled
+## Review scope
 
-Annotators judge whether the identity represented by one marketplace listing is
+Reviewers determine whether the identity represented by one marketplace listing is
 consistent with a specific official BPOM record. They do not judge physical authenticity,
 chemical safety, seller intent, or legal liability.
 
@@ -17,17 +17,17 @@ chemical safety, seller intent, or legal liability.
 ## Procedure
 
 1. Capture the listing URL, timestamp, and a private screenshot; redact seller personal
-   information before sharing outside the annotation workspace.
+   information before sharing outside the private review workspace.
 2. Record visible text without correcting it from the official record.
 3. Retrieve every official candidate for the observed NIE. Do not silently choose one
    when the official snapshot is ambiguous.
 4. Assign one label and one or more controlled reason codes.
-5. Two annotators work independently. They must not see each other's first-round label.
-6. Adjudicate every disagreement and preserve both original labels plus the final label.
-7. Freeze the 120-sample test set before selecting model thresholds.
+5. Two reviewers work independently. They must not see each other's initial label.
+6. Resolve every disagreement and preserve both initial labels plus the resolved label.
+7. Finalize the 120-sample test set before selecting model thresholds.
 
-Use `annotation_round=independent` for the two blinded labels and
-`annotation_round=adjudication` for the optional resolution row. Separate multiple reason
+Use `review_stage=initial` for the two independent reviews and
+`review_stage=resolution` for the optional resolution row. Separate multiple reason
 codes with semicolons. `readability` must be `READABLE`, `PARTIALLY_READABLE`, or
 `UNREADABLE`. Allowed reason codes are:
 
@@ -41,13 +41,13 @@ codes with semicolons. `readability` must be `READABLE`, `PARTIALLY_READABLE`, o
 Validate work in progress with:
 
 ```bash
-safecart-ai-validate-gold-annotations private/gold-annotations.csv
+safecart-ai-validate-evaluation-dataset private/evaluation-dataset.csv
 ```
 
-The final freeze must additionally pass:
+The finalized dataset must additionally pass:
 
 ```bash
-safecart-ai-validate-gold-annotations private/gold-annotations.csv --freeze
+safecart-ai-validate-evaluation-dataset private/evaluation-dataset.csv --final
 ```
 
 ## Target composition
