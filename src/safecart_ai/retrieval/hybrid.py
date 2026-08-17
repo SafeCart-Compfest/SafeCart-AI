@@ -3,8 +3,11 @@ from __future__ import annotations
 import math
 from collections import defaultdict
 from dataclasses import dataclass
+from typing import cast
 
+import numpy as np
 from rapidfuzz import fuzz
+from scipy.sparse import csr_matrix
 from sklearn.feature_extraction.text import TfidfVectorizer
 
 from safecart_ai.data.pairs import CatalogRecord
@@ -62,6 +65,7 @@ class HybridRetriever:
     def __init__(self, records: list[CatalogRecord], max_pool: int = 5000) -> None:
         self._records = records
         self._max_pool = max_pool
+        self._texts = [retrieval_text(record.brand, record.product_name) for record in records]
         self._by_nie: dict[str, list[int]] = defaultdict(list)
         self._by_brand: dict[str, list[int]] = defaultdict(list)
         self._by_token: dict[str, list[int]] = defaultdict(list)
@@ -72,6 +76,17 @@ class HybridRetriever:
                 self._by_brand[brand].append(index)
             for token in retrieval_tokens(record.product_name)[:4]:
                 self._by_token[token].append(index)
+
+        self._vectorizer: TfidfVectorizer | None = None
+        self._document_matrix: csr_matrix | None = None
+        if any(self._texts):
+            self._vectorizer = TfidfVectorizer(
+                analyzer="char_wb",
+                ngram_range=(3, 5),
+                lowercase=False,
+                dtype=np.float32,
+            )
+            self._document_matrix = cast(csr_matrix, self._vectorizer.fit_transform(self._texts))
 
     def _pool(self, query: RetrievalQuery) -> list[int]:
         pool: set[int] = set()
@@ -90,10 +105,7 @@ class HybridRetriever:
             key=lambda index: (
                 -fuzz.WRatio(
                     query_text,
-                    retrieval_text(
-                        self._records[index].brand,
-                        self._records[index].product_name,
-                    ),
+                    self._texts[index],
                 ),
                 self._records[index].record_id,
             ),
@@ -112,27 +124,22 @@ class HybridRetriever:
         lexical_indices = self._pool(query)
         query_text = retrieval_text(query.brand, query.product_name)
         lexical_scores: dict[int, float] = {}
-        if lexical_indices and query_text:
-            documents = [
-                query_text,
-                *(
-                    retrieval_text(self._records[index].brand, self._records[index].product_name)
-                    for index in lexical_indices
-                ),
-            ]
-            vectorizer = TfidfVectorizer(
-                analyzer="char_wb",
-                ngram_range=(3, 5),
-                lowercase=False,
+        if (
+            lexical_indices
+            and query_text
+            and self._vectorizer is not None
+            and self._document_matrix is not None
+        ):
+            query_vector = cast(csr_matrix, self._vectorizer.transform([query_text]))
+            similarities = cast(
+                list[float],
+                (self._document_matrix[lexical_indices] @ query_vector.T)
+                .toarray()
+                .ravel()
+                .tolist(),
             )
-            matrix = vectorizer.fit_transform(documents)
-            similarities = (matrix[1:] @ matrix[0].T).toarray().ravel()
             for index, similarity in zip(lexical_indices, similarities, strict=True):
-                candidate_text = retrieval_text(
-                    self._records[index].brand,
-                    self._records[index].product_name,
-                )
-                fuzzy = fuzz.WRatio(query_text, candidate_text) / 100
+                fuzzy = fuzz.WRatio(query_text, self._texts[index]) / 100
                 lexical_scores[index] = 0.7 * float(similarity) + 0.3 * fuzzy
 
         combined: dict[int, RetrievalCandidate] = {}

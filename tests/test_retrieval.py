@@ -6,7 +6,7 @@ import pytest
 
 from safecart_ai.cli.evaluate_retrieval import main as evaluate_retrieval_main
 from safecart_ai.data.pairs import CatalogRecord, generate_pairs
-from safecart_ai.retrieval.evaluation import evaluate_retrieval
+from safecart_ai.retrieval.evaluation import bootstrap_mean_ci, evaluate_retrieval
 from safecart_ai.retrieval.hybrid import HybridRetriever, RetrievalQuery, mean
 
 
@@ -96,6 +96,30 @@ def test_retrieval_validates_top_k_and_empty_query() -> None:
         retriever.retrieve(RetrievalQuery(), top_k=0)
 
 
+def test_exact_retrieval_works_when_catalog_has_no_lexical_text() -> None:
+    record = CatalogRecord(
+        record_id="f" * 24,
+        nie="NA9999",
+        brand=None,
+        product_name=None,
+        package=None,
+        registrant=None,
+    )
+
+    candidates = HybridRetriever([record]).retrieve(RetrievalQuery(nie="NA9999"))
+
+    assert [candidate.record.record_id for candidate in candidates] == [record.record_id]
+
+
+def test_bootstrap_interval_is_deterministic_and_validates_samples() -> None:
+    interval = bootstrap_mean_ci([0.0, 1.0, 1.0], seed=42, samples=100)
+
+    assert 0.0 <= interval["low"] <= interval["high"] <= 1.0
+    assert bootstrap_mean_ci([], seed=42) == {"low": 0.0, "high": 0.0}
+    with pytest.raises(ValueError, match="positive"):
+        bootstrap_mean_ci([1.0], seed=42, samples=0)
+
+
 def test_evaluation_and_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     records = [
         CatalogRecord(
@@ -117,6 +141,7 @@ def test_evaluation_and_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
 
     assert result["query_count"] == 10
     assert result["recall_at_5"] == 1.0
+    assert result["confidence_intervals_95"]
 
     monkeypatch.setattr(
         sys,
@@ -130,6 +155,9 @@ def test_evaluation_and_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> 
             "--max-queries",
             "5",
             "--lexical-only",
+            "--output",
+            str(tmp_path / "metrics.json"),
         ],
     )
     evaluate_retrieval_main()
+    assert (tmp_path / "metrics.json").is_file()
