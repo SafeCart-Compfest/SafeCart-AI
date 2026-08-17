@@ -10,7 +10,7 @@ from dataclasses import asdict
 from datetime import UTC, datetime
 from importlib.metadata import version
 from pathlib import Path
-from typing import Any, Protocol, cast
+from typing import Any, cast
 
 import numpy as np
 
@@ -19,8 +19,51 @@ from safecart_ai.matching.pair_text import ID_TO_LABEL, LABEL_TO_ID, format_pair
 from safecart_ai.matching.training_config import MatcherTrainingConfig
 
 
-class _WeightedLoss(Protocol):
-    def __call__(self, outputs: Any, labels: Any, num_items_in_batch: Any = None) -> Any: ...
+class WeightedCrossEntropy:
+    def __init__(self, functional: Any, weight_tensor: Any) -> None:
+        self._functional = functional
+        self._weight_tensor = weight_tensor
+
+    def __call__(self, outputs: Any, labels: Any, num_items_in_batch: Any = None) -> Any:
+        del num_items_in_batch
+        return self._functional.cross_entropy(
+            outputs.logits,
+            labels,
+            weight=self._weight_tensor.to(outputs.logits.device),
+        )
+
+
+class PairTokenizer:
+    def __init__(self, tokenizer: Any, max_length: int) -> None:
+        self._tokenizer = tokenizer
+        self._max_length = max_length
+
+    def __call__(self, batch: dict[str, list[object]]) -> dict[str, object]:
+        texts = [
+            format_pair({field: values[index] for field, values in batch.items()})
+            for index in range(len(batch["label"]))
+        ]
+        encoded = self._tokenizer(
+            texts,
+            truncation=True,
+            max_length=self._max_length,
+        )
+        encoded["labels"] = [label_id(str(label)) for label in batch["label"]]
+        return cast(dict[str, object], encoded)
+
+
+class ModelFactory:
+    def __init__(self, factory: Any, model_name: str) -> None:
+        self._factory = factory
+        self._model_name = model_name
+
+    def __call__(self) -> Any:
+        return self._factory.from_pretrained(
+            self._model_name,
+            num_labels=2,
+            id2label=ID_TO_LABEL,
+            label2id=LABEL_TO_ID,
+        )
 
 
 def _sha256(path: Path) -> str:
@@ -87,18 +130,6 @@ def _trainer_metrics(prediction: Any) -> dict[str, float]:
     }
 
 
-def _make_weighted_loss(functional: Any, weight_tensor: Any) -> _WeightedLoss:
-    def weighted_loss(outputs: Any, labels: Any, num_items_in_batch: Any = None) -> Any:
-        del num_items_in_batch
-        return functional.cross_entropy(
-            outputs.logits,
-            labels,
-            weight=weight_tensor.to(outputs.logits.device),
-        )
-
-    return weighted_loss
-
-
 def _softmax(logits: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     shifted = logits - np.max(logits, axis=1, keepdims=True)
     exponentials = np.exp(shifted)
@@ -110,6 +141,7 @@ def _softmax(logits: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
 
 def run_training(pairs_path: Path, config_path: Path, output_dir: Path) -> None:
     """Fine-tune and evaluate the pair classifier on train/dev only."""
+    # Training dependencies are optional and are not installed in the API image.
     import torch
     import torch.nn.functional as functional
     from datasets import load_dataset
@@ -143,20 +175,7 @@ def run_training(pairs_path: Path, config_path: Path, output_dir: Path) -> None:
 
     tokenizer = AutoTokenizer.from_pretrained(config.model_name)
 
-    def tokenize(batch: dict[str, list[object]]) -> dict[str, object]:
-        count = len(batch["label"])
-        texts = [
-            format_pair({field: values[index] for field, values in batch.items()})
-            for index in range(count)
-        ]
-        encoded = tokenizer(
-            texts,
-            truncation=True,
-            max_length=config.max_length,
-        )
-        encoded["labels"] = [label_id(str(label)) for label in batch["label"]]
-        return cast(dict[str, object], encoded)
-
+    tokenize = PairTokenizer(tokenizer, config.max_length)
     train_dataset = train_source.map(
         tokenize,
         batched=True,
@@ -172,14 +191,6 @@ def run_training(pairs_path: Path, config_path: Path, output_dir: Path) -> None:
     train_labels = [label_id(str(label)) for label in train_source["label"]]
     weights = _class_weights(train_labels)
     weight_tensor = torch.tensor(weights, dtype=torch.float32)
-
-    def model_init() -> Any:
-        return AutoModelForSequenceClassification.from_pretrained(
-            config.model_name,
-            num_labels=2,
-            id2label=ID_TO_LABEL,
-            label2id=LABEL_TO_ID,
-        )
 
     training_args = TrainingArguments(
         output_dir=str(output_dir / "checkpoints"),
@@ -206,12 +217,12 @@ def run_training(pairs_path: Path, config_path: Path, output_dir: Path) -> None:
         dataloader_num_workers=2,
     )
     trainer = Trainer(
-        model_init=model_init,
+        model_init=ModelFactory(AutoModelForSequenceClassification, config.model_name),
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=dev_dataset,
         processing_class=tokenizer,
-        compute_loss_func=_make_weighted_loss(functional, weight_tensor),
+        compute_loss_func=WeightedCrossEntropy(functional, weight_tensor),
         compute_metrics=_trainer_metrics,
         callbacks=[
             EarlyStoppingCallback(

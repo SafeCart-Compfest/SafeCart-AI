@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from safecart_ai.cli.train_matcher import main as train_matcher_main
-from safecart_ai.matching.hf_training import _make_weighted_loss
+from safecart_ai.matching.hf_training import WeightedCrossEntropy
 from safecart_ai.matching.metrics import bootstrap_classification_ci, classification_metrics
 from safecart_ai.matching.pair_text import format_pair, label_id
 from safecart_ai.matching.training_config import MatcherTrainingConfig
@@ -173,7 +173,7 @@ def test_weighted_loss_accepts_trainer_batch_size_keyword() -> None:
             return logits, labels, weight
 
     labels = object()
-    weighted_loss = _make_weighted_loss(Functional(), WeightTensor())
+    weighted_loss = WeightedCrossEntropy(Functional(), WeightTensor())
 
     assert weighted_loss(Outputs(), labels, num_items_in_batch=8) == (
         Outputs.logits,
