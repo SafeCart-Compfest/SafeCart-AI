@@ -28,5 +28,6 @@ the run budget and make timing incomparable.
 4. Do not publish weights until evaluation, calibration, model card, and checksum review
    are complete.
 
-The actual launcher is added after this training implementation is squash-merged, so it
-can pin a real immutable Git SHA instead of a branch or placeholder.
+`smoke/run.py` is the submitted private-kernel launcher. It pins the merged source SHA,
+verifies the attached dataset before installing dependencies, fails if CUDA is absent,
+and checks the output manifest SHA before reporting success.
