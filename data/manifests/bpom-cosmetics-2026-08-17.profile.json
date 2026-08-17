@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "dataset_id": "bpom-cosmetics-2026-08-17",
+  "profiled_at": "2026-08-17",
+  "commodity": "Kosmetik",
+  "all_source_rows": 661894,
+  "commodity_source_rows": 364133,
+  "unique_nie": 275415,
+  "canonical_records": 275582,
+  "collapsed_duplicate_rows": 88551,
+  "ambiguous_nie_count": 164,
+  "canonical_catalog": {
+    "path": "data/processed/bpom-cosmetics.csv",
+    "size_bytes": 57870652,
+    "sha256": "298e5fc5b08ae7901dd0b7912bdffd764cd505d71b2a25104cce7faa0d2014ca",
+    "committed": false
+  }
+}

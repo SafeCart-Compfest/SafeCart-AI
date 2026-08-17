@@ -1,0 +1,14 @@
+.git
+.venv
+__pycache__
+.pytest_cache
+.mypy_cache
+.ruff_cache
+artifacts
+data/raw
+data/interim
+data/processed
+models
+mlruns
+outputs
+tests
