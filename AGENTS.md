@@ -4,7 +4,7 @@
   matching, calibration, model export, and private inference.
 - Do not add the public assessment API, frontend, scraping runtime, or deployment
   composition here.
-- Work AI-first. Do not add PWA integration until the experiment acceptance gates pass.
+- Work AI-first. Do not add PWA integration until the required AI checks pass.
 - Explain affected files and the current flow before broad edits.
 - Keep domain logic independent from FastAPI, OCR, storage, and model frameworks.
 - Treat all external records as versioned evidence, not unquestionable ground truth.
