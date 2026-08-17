@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "dataset_id": "safecart-product-pairs-v1",
+  "owner": "ryuorlandotamin",
+  "platform": "Kaggle",
+  "slug": "ryuorlandotamin/safecart-product-pairs-v1",
+  "visibility": "private",
+  "uploaded_at": "2026-08-17",
+  "purpose": "GPU training input for the SafeCart pair matcher",
+  "license": "other",
+  "permission_status": "Private working copy; redistribution rights are not asserted",
+  "contains_raw_screenshots": false,
+  "contains_personal_seller_data": false,
+  "source": {
+    "dataset_id": "bpom-cosmetics-2026-08-17",
+    "generator_seed": 42,
+    "rows": 826746,
+    "file": "product-pairs.csv",
+    "size_bytes": 317076465,
+    "sha256": "a2016a60458c3bed4edcc8ad5902ead2dd2f615ebcc2f0166956829ee4ba42f1"
+  },
+  "label_semantics": "MATCH or MISMATCH for listing-to-record identity consistency",
+  "prohibited_interpretation": "Labels are not counterfeit, authenticity, safety, or legality ground truth"
+}
