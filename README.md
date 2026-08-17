@@ -65,7 +65,11 @@ uv run safecart-ai-build-catalog "../dataset/Data BPOM" \
 uv run safecart-ai-generate-pairs data/processed/bpom-cosmetics.csv \
   data/processed/product-pairs.csv --seed 42
 uv run safecart-ai-evaluate-retrieval data/processed/bpom-cosmetics.csv \
-  --split test --output outputs/retrieval-test.json
+  data/processed/product-pairs.csv --split dev \
+  --output outputs/retrieval-dev.json
+uv run safecart-ai-train-matcher data/processed/product-pairs.csv \
+  --config training/configs/distilmbert-v1.toml \
+  --output outputs/distilmbert-v1
 ```
 
 Do not use the frozen test split to choose features, models, or thresholds.

@@ -22,9 +22,10 @@ dev = [
   "ruff>=0.12,<1",
 ]
 ml = [
+  "accelerate>=1.10,<2",
   "datasets>=4,<5",
-  "evaluate>=0.4,<1",
-  "sentence-transformers>=5,<6",
+  "torch>=2.7,<3",
+  "transformers>=4.56,<5",
 ]
 
 [project.scripts]
@@ -32,6 +33,7 @@ safecart-ai-audit-bpom = "safecart_ai.cli.audit_bpom:main"
 safecart-ai-build-catalog = "safecart_ai.cli.build_catalog:main"
 safecart-ai-evaluate-retrieval = "safecart_ai.cli.evaluate_retrieval:main"
 safecart-ai-generate-pairs = "safecart_ai.cli.generate_pairs:main"
+safecart-ai-train-matcher = "safecart_ai.cli.train_matcher:main"
 safecart-ai-verify-manifest = "safecart_ai.cli.verify_manifest:main"
 
 [build-system]
@@ -48,6 +50,7 @@ testpaths = ["tests"]
 [tool.coverage.run]
 branch = true
 source = ["safecart_ai"]
+omit = ["src/safecart_ai/matching/hf_training.py"]
 
 [tool.coverage.report]
 fail_under = 85
@@ -67,5 +70,10 @@ files = ["src", "tests"]
 
 [[tool.mypy.overrides]]
 module = ["numpy", "numpy.*", "scipy", "scipy.*", "sklearn", "sklearn.*"]
+follow_imports = "skip"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["datasets", "datasets.*", "torch", "torch.*", "transformers", "transformers.*"]
 follow_imports = "skip"
 ignore_missing_imports = true
