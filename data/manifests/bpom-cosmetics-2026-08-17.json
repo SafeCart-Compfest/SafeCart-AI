@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "dataset_id": "bpom-cosmetics-2026-08-17",
+  "title": "Local BPOM Product Snapshot - Cosmetics Subset",
+  "owner": "Badan Pengawas Obat dan Makanan Republik Indonesia",
+  "source_url": "https://satudata.pom.go.id/datasets",
+  "acquired_at": "2026-08-17",
+  "license_status": "Permission and redistribution terms require confirmation",
+  "redistribution_allowed": false,
+  "allowed_use": "Local competition research only until source terms are confirmed",
+  "fields_used": [
+    "nama_produk",
+    "brand",
+    "nie",
+    "masa_berlaku",
+    "nama_komoditi",
+    "kemasan",
+    "pendaftar",
+    "status_produk"
+  ],
+  "preprocessing": [
+    "Filter nama_komoditi exactly equal to Kosmetik",
+    "Normalize NIE to uppercase alphanumeric characters",
+    "Convert empty and NULL strings to null",
+    "Collapse rows with the same normalized identity tuple while retaining source_row_count",
+    "Preserve multiple distinct identities associated with one NIE"
+  ],
+  "files": [
+    {
+      "path": "bpom_products_001.csv",
+      "size_bytes": 55854600,
+      "sha256": "736fb51bb052dd145e88b04e16aeaa7c30403a4796f7e7038127fe5bfda39867"
+    },
+    {
+      "path": "bpom_products_002.csv",
+      "size_bytes": 54236071,
+      "sha256": "c997f1123bd017cab018f24bb5563410abe04f9353d669f3a716b7fa3e458669"
+    },
+    {
+      "path": "bpom_products_003.csv",
+      "size_bytes": 54135186,
+      "sha256": "a9c96153c10c959d9759ae599faed9fa0cbc55c7fb678db22aff2b46033c2135"
+    },
+    {
+      "path": "bpom_products_004.csv",
+      "size_bytes": 54216261,
+      "sha256": "c98f648882b23e4c26bedb81b64983312a1a391d625844030fa572b743f12e97"
+    },
+    {
+      "path": "bpom_products_005.csv",
+      "size_bytes": 22358747,
+      "sha256": "7d3a062332bbfadd03d0f96e35d08d4d9d2a7fcedb023b407256df584a87f247"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "source_dataset_id": "bpom-cosmetics-2026-08-17",
+  "seed": 42,
+  "catalog_records": 275582,
+  "pair_rows": 826746,
+  "positive_rows": 275582,
+  "mismatch_rows": 551164,
+  "mutation_counts": {
+    "AMBIGUOUS_NIE": 331,
+    "CROSS_BRAND_NEGATIVE": 300401,
+    "NORMALIZED_POSITIVE": 275582,
+    "SAME_BRAND_HARD_NEGATIVE": 250432
+  },
+  "split_counts": {
+    "train": {"MATCH": 220582, "MISMATCH": 441164},
+    "dev": {"MATCH": 27389, "MISMATCH": 54778},
+    "calibration": {"MATCH": 13764, "MISMATCH": 27528},
+    "synthetic_test": {"MATCH": 13847, "MISMATCH": 27694}
+  },
+  "validation": {
+    "unique_connected_groups": 248055,
+    "unique_product_families": 248212,
+    "cross_split_group_leakage": 0,
+    "cross_split_family_leakage": 0
+  },
+  "generated_file": {
+    "path": "data/processed/product-pairs.csv",
+    "size_bytes": 317076465,
+    "sha256": "a2016a60458c3bed4edcc8ad5902ead2dd2f615ebcc2f0166956829ee4ba42f1",
+    "committed": false
+  }
+}
