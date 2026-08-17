@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from safecart_ai.cli.train_matcher import main as train_matcher_main
+from safecart_ai.matching.hf_training import _make_weighted_loss
 from safecart_ai.matching.metrics import bootstrap_classification_ci, classification_metrics
 from safecart_ai.matching.pair_text import format_pair, label_id
 from safecart_ai.matching.training_config import MatcherTrainingConfig
@@ -152,3 +153,30 @@ def test_training_cli_rejects_missing_pair_file(
 
     with pytest.raises(SystemExit, match="2"):
         train_matcher_main()
+
+
+def test_weighted_loss_accepts_trainer_batch_size_keyword() -> None:
+    class Logits:
+        device = "cuda:0"
+
+    class Outputs:
+        logits = Logits()
+
+    class WeightTensor:
+        def to(self, device: str) -> tuple[str, str]:
+            return ("weights", device)
+
+    class Functional:
+        def cross_entropy(
+            self, logits: object, labels: object, *, weight: object
+        ) -> tuple[object, object, object]:
+            return logits, labels, weight
+
+    labels = object()
+    weighted_loss = _make_weighted_loss(Functional(), WeightTensor())
+
+    assert weighted_loss(Outputs(), labels, num_items_in_batch=8) == (
+        Outputs.logits,
+        labels,
+        ("weights", "cuda:0"),
+    )
