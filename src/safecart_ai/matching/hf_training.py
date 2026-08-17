@@ -10,13 +10,17 @@ from dataclasses import asdict
 from datetime import UTC, datetime
 from importlib.metadata import version
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Protocol, cast
 
 import numpy as np
 
 from safecart_ai.matching.metrics import classification_metrics
 from safecart_ai.matching.pair_text import ID_TO_LABEL, LABEL_TO_ID, format_pair, label_id
 from safecart_ai.matching.training_config import MatcherTrainingConfig
+
+
+class _WeightedLoss(Protocol):
+    def __call__(self, outputs: Any, labels: Any, num_items_in_batch: Any = None) -> Any: ...
 
 
 def _sha256(path: Path) -> str:
@@ -81,6 +85,18 @@ def _trainer_metrics(prediction: Any) -> dict[str, float]:
         "mismatch_precision": float(mismatch["precision"]),
         "mismatch_recall": float(mismatch["recall"]),
     }
+
+
+def _make_weighted_loss(functional: Any, weight_tensor: Any) -> _WeightedLoss:
+    def weighted_loss(outputs: Any, labels: Any, num_items_in_batch: Any = None) -> Any:
+        del num_items_in_batch
+        return functional.cross_entropy(
+            outputs.logits,
+            labels,
+            weight=weight_tensor.to(outputs.logits.device),
+        )
+
+    return weighted_loss
 
 
 def _softmax(logits: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
@@ -165,13 +181,6 @@ def run_training(pairs_path: Path, config_path: Path, output_dir: Path) -> None:
             label2id=LABEL_TO_ID,
         )
 
-    def weighted_loss(outputs: Any, labels: Any, _num_items: Any = None) -> Any:
-        return functional.cross_entropy(
-            outputs.logits,
-            labels,
-            weight=weight_tensor.to(outputs.logits.device),
-        )
-
     training_args = TrainingArguments(
         output_dir=str(output_dir / "checkpoints"),
         eval_strategy="epoch",
@@ -202,7 +211,7 @@ def run_training(pairs_path: Path, config_path: Path, output_dir: Path) -> None:
         train_dataset=train_dataset,
         eval_dataset=dev_dataset,
         processing_class=tokenizer,
-        compute_loss_func=weighted_loss,
+        compute_loss_func=_make_weighted_loss(functional, weight_tensor),
         compute_metrics=_trainer_metrics,
         callbacks=[
             EarlyStoppingCallback(
