@@ -4,7 +4,7 @@ from pathlib import Path
 import pytest
 
 from safecart_ai.cli.train_matcher import main as train_matcher_main
-from safecart_ai.matching.metrics import classification_metrics
+from safecart_ai.matching.metrics import bootstrap_classification_ci, classification_metrics
 from safecart_ai.matching.pair_text import format_pair, label_id
 from safecart_ai.matching.training_config import MatcherTrainingConfig
 
@@ -115,6 +115,21 @@ def test_classification_metrics_report_both_classes() -> None:
         classification_metrics([0], [0, 1])
     with pytest.raises(ValueError, match="at least one"):
         classification_metrics([], [])
+
+
+def test_bootstrap_classification_interval_is_deterministic() -> None:
+    interval = bootstrap_classification_ci([0, 0, 1, 1], [0, 1, 1, 1], samples=100)
+
+    assert interval == bootstrap_classification_ci([0, 0, 1, 1], [0, 1, 1, 1], samples=100)
+    macro = interval["macro_f1"]
+    assert isinstance(macro, dict)
+    assert 0.0 <= macro["low"] <= macro["high"] <= 1.0
+    with pytest.raises(ValueError, match="equal length"):
+        bootstrap_classification_ci([0], [0, 1])
+    with pytest.raises(ValueError, match="at least one"):
+        bootstrap_classification_ci([], [])
+    with pytest.raises(ValueError, match="positive"):
+        bootstrap_classification_ci([0], [0], samples=0)
 
 
 def test_training_cli_rejects_missing_pair_file(

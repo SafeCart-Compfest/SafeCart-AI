@@ -31,6 +31,7 @@ ml = [
 [project.scripts]
 safecart-ai-audit-bpom = "safecart_ai.cli.audit_bpom:main"
 safecart-ai-build-catalog = "safecart_ai.cli.build_catalog:main"
+safecart-ai-evaluate-pair-baseline = "safecart_ai.cli.evaluate_pair_baseline:main"
 safecart-ai-evaluate-retrieval = "safecart_ai.cli.evaluate_retrieval:main"
 safecart-ai-generate-pairs = "safecart_ai.cli.generate_pairs:main"
 safecart-ai-train-matcher = "safecart_ai.cli.train_matcher:main"

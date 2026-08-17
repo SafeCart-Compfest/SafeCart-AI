@@ -39,6 +39,14 @@ maintaining an acceptable false-positive rate on valid listings.
 Thresholds are competition targets, not current measured results. If they are missed,
 report the measured result and failure analysis rather than tuning on the test set.
 
+## 17 August baseline audit
+
+Exact-NIE and deterministic rules reach 99.96% and 100.00% macro-F1 (rounded) on the
+generated dev pairs. This saturation means the synthetic split is useful for leakage and
+pipeline testing but not for proving model lift. The bounded full fine-tuning run is held
+until real hard negatives and OCR-degraded dev cases create measurable headroom. See
+`docs/experiments/PAIR_BASELINES_DEV_2026-08-17.md`.
+
 ## Eight-day critical path
 
 ### 17 August

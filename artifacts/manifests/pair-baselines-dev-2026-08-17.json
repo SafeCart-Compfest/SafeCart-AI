@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "run_date": "2026-08-17",
+  "dataset_kind": "synthetic-dev",
+  "split": "dev",
+  "rows": 82167,
+  "pairs_sha256": "a2016a60458c3bed4edcc8ad5902ead2dd2f615ebcc2f0166956829ee4ba42f1",
+  "bootstrap": {
+    "method": "percentile bootstrap over observed confusion categories",
+    "resamples": 2000,
+    "seed": 42
+  },
+  "baselines": {
+    "exact_nie": {
+      "macro_f1": 0.9996441020934822,
+      "macro_f1_ci_95": [0.9994928881765506, 0.9997675547476053],
+      "mismatch_precision": 1.0,
+      "mismatch_recall": 0.9995253568951039,
+      "confusion_matrix": [[27389, 0], [26, 54752]],
+      "failure_summary": "All 26 errors are AMBIGUOUS_NIE negatives."
+    },
+    "deterministic": {
+      "macro_f1": 0.999958923991066,
+      "macro_f1_ci_95": [0.9999040856530143, 1.0],
+      "mismatch_precision": 0.9999452364871032,
+      "mismatch_recall": 1.0,
+      "confusion_matrix": [[27386, 3], [0, 54778]],
+      "failure_summary": "Three positive pairs fail package normalization on multi-pack notation."
+    }
+  },
+  "decision": "Do not use synthetic-dev performance to justify fine-tuning; acquire real hard negatives and OCR-degraded listings before the bounded full run.",
+  "limitations": [
+    "Generated negatives are almost perfectly separable by NIE and deterministic fields.",
+    "The split contains canonical text pairs rather than real marketplace OCR output.",
+    "No calibration, synthetic-test, or gold-test row was used."
+  ]
+}
