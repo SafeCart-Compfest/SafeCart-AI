@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "run_date": "2026-08-17",
+  "dataset_kind": "synthetic-dev",
+  "split": "dev",
+  "seed": 42,
+  "catalog_records": 275582,
+  "query_count": 1000,
+  "bootstrap_resamples": 2000,
+  "inputs": {
+    "catalog_sha256": "298e5fc5b08ae7901dd0b7912bdffd764cd505d71b2a25104cce7faa0d2014ca",
+    "pairs_sha256": "a2016a60458c3bed4edcc8ad5902ead2dd2f615ebcc2f0166956829ee4ba42f1"
+  },
+  "environment": {
+    "os": "Microsoft Windows 11 Home Single Language",
+    "cpu": "Intel Core Ultra 5 225H",
+    "physical_cores": 14,
+    "logical_processors": 14,
+    "memory_gib": 15.5
+  },
+  "runs": {
+    "exact_nie_plus_lexical": {
+      "recall_at_1": 0.931,
+      "recall_at_1_ci_95": [0.915, 0.946],
+      "recall_at_5": 0.999,
+      "recall_at_5_ci_95": [0.997, 1.0],
+      "recall_at_20": 1.0,
+      "recall_at_20_ci_95": [1.0, 1.0],
+      "mean_reciprocal_rank": 0.9626761904761906,
+      "mean_reciprocal_rank_ci_95": [0.9540095238095238, 0.9711666666666666],
+      "index_build_seconds": 18.042606999981217,
+      "mean_query_seconds": 0.08006797379994532
+    },
+    "lexical_only": {
+      "recall_at_1": 0.923,
+      "recall_at_1_ci_95": [0.907, 0.94],
+      "recall_at_5": 0.998,
+      "recall_at_5_ci_95": [0.995, 1.0],
+      "recall_at_20": 1.0,
+      "recall_at_20_ci_95": [1.0, 1.0],
+      "mean_reciprocal_rank": 0.9589761904761904,
+      "mean_reciprocal_rank_ci_95": [0.9499761904761905, 0.9680833333333334],
+      "index_build_seconds": 16.67862189997686,
+      "mean_query_seconds": 0.05708159010001691
+    }
+  },
+  "limitations": [
+    "Metrics use generated positive pairs, not the frozen real-listing gold test set.",
+    "Timing is a single run on one development machine and is not a p95 service benchmark.",
+    "No threshold or model decision was selected from the synthetic test split."
+  ]
+}
