@@ -26,6 +26,30 @@ chemical safety, seller intent, or legal liability.
 6. Adjudicate every disagreement and preserve both original labels plus the final label.
 7. Freeze the 120-sample test set before selecting model thresholds.
 
+Use `annotation_round=independent` for the two blinded labels and
+`annotation_round=adjudication` for the optional resolution row. Separate multiple reason
+codes with semicolons. `readability` must be `READABLE`, `PARTIALLY_READABLE`, or
+`UNREADABLE`. Allowed reason codes are:
+
+- `IDENTITY_CONSISTENT`
+- `NIE_MISMATCH`, `NIE_NOT_FOUND`, or `OFFICIAL_NIE_AMBIGUOUS`
+- `BRAND_MISMATCH`, `PRODUCT_NAME_MISMATCH`, or `VARIANT_MISMATCH`
+- `PACKAGE_MISMATCH`, `SPF_MISMATCH`, `SHADE_MISMATCH`, or `STRENGTH_MISMATCH`
+- `UNREADABLE`, `MISSING_IDENTITY_FIELDS`, `MULTIPLE_PLAUSIBLE_RECORDS`, or
+  `SOURCE_UNVERIFIABLE`
+
+Validate work in progress with:
+
+```bash
+safecart-ai-validate-gold-annotations private/gold-annotations.csv
+```
+
+The final freeze must additionally pass:
+
+```bash
+safecart-ai-validate-gold-annotations private/gold-annotations.csv --freeze
+```
+
 ## Target composition
 
 - 50 identity-consistent listings.
