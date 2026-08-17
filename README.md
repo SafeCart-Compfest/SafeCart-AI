@@ -32,9 +32,9 @@ verified BPOM snapshots
   -> matcher, calibration, and decision rules
 ```
 
-The current private endpoint retrieves candidates from the BPOM catalog and applies the
-deterministic baseline. OCR and the fine-tuned cross-encoder are added after their
-required checks pass.
+The private image endpoint uses Tesseract to extract visible listing identity, retrieves
+BPOM candidates, and applies the deterministic baseline. The fine-tuned cross-encoder is
+added after its required checks pass.
 
 ## Local development
 

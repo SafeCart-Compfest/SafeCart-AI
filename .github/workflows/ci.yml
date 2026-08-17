@@ -53,3 +53,5 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker build --tag safecart-ai:${{ github.sha }} .
+      - run: docker run --rm safecart-ai:${{ github.sha }} tesseract --version
+      - run: docker run --rm safecart-ai:${{ github.sha }} tesseract --list-langs | grep -qx ind

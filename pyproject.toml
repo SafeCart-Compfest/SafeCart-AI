@@ -8,6 +8,7 @@ dependencies = [
   "fastapi>=0.116,<1",
   "numpy>=1.26,<2.3",
   "pydantic-settings>=2.10,<3",
+  "python-multipart>=0.0.20,<1",
   "rapidfuzz>=3.13,<4",
   "scikit-learn>=1.7,<2",
   "uvicorn[standard]>=0.35,<1",

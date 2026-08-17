@@ -6,6 +6,8 @@ def test_settings_have_safe_local_defaults() -> None:
 
     assert settings.env == "development"
     assert str(settings.data_path).replace("\\", "/") == "data/processed/bpom-cosmetics.csv"
+    assert settings.ocr_language == "eng+ind"
+    assert settings.ocr_timeout_seconds == 15
 
 
 def test_get_settings_is_cached() -> None:
