@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "run_kind": "technical_smoke_test",
+  "evidentiary_model_result": false,
+  "completed_at": "2026-08-17T17:32:17.742652+07:00",
+  "kernel": {
+    "slug": "ryuorlandotamin/safecart-matcher-smoke-v1",
+    "version": 4,
+    "url": "https://www.kaggle.com/code/ryuorlandotamin/safecart-matcher-smoke-v1"
+  },
+  "source": {
+    "git_sha": "4c406c7e7db005c1eb15fd0bef3de5f676ebe1ef",
+    "config_sha256": "d856b40cff0585ae13190a2204ccb45f906d842b1d862d9e4d217f71147e0614",
+    "dataset_sha256": "a2016a60458c3bed4edcc8ad5902ead2dd2f615ebcc2f0166956829ee4ba42f1",
+    "downloaded_run_manifest_sha256": "329f230d4856be12f6f094ef840175b03d1787ac53f75c2c0a22e008b0ee28b6"
+  },
+  "environment": {
+    "cuda_device": "Tesla T4",
+    "python": "3.12.13",
+    "torch": "2.10.0+cu128",
+    "transformers": "4.57.6",
+    "datasets": "4.8.5"
+  },
+  "sample": {
+    "train_rows": 96,
+    "dev_rows": 48,
+    "epochs": 1.0,
+    "seed": 42
+  },
+  "result": {
+    "pipeline_completed": true,
+    "train_runtime_seconds": 7.3063,
+    "macro_f1": 0.23809523809523808,
+    "confusion_matrix": [
+      [15, 0],
+      [33, 0]
+    ],
+    "label_order": ["MATCH", "MISMATCH"]
+  },
+  "limitations": [
+    "The tiny smoke split is not representative and is not an acceptance-gate result.",
+    "The synthetic development data is saturated for deterministic baselines.",
+    "No model weights or private data are committed to Git."
+  ]
+}

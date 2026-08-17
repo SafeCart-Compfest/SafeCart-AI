@@ -47,6 +47,10 @@ pipeline testing but not for proving model lift. The bounded full fine-tuning ru
 until real hard negatives and OCR-degraded dev cases create measurable headroom. See
 `docs/experiments/PAIR_BASELINES_DEV_2026-08-17.md`.
 
+The Kaggle T4 training path also passed a pinned 96/48-row technical smoke test. Its
+metrics are deliberately excluded from acceptance-gate evidence; see
+`docs/experiments/MATCHER_SMOKE_KAGGLE_V4_2026-08-17.md`.
+
 ## Eight-day critical path
 
 ### 17 August
