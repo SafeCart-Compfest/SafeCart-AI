@@ -8,3 +8,7 @@ hashes together.
 dev pairs, effective batch size 32, learning rate `2e-5`, maximum length 192, and at most
 three epochs with macro-F1 early stopping. Sample caps protect the 12-hour notebook
 budget; increase them only through a documented dev-set experiment.
+
+`distilmbert-smoke.toml` exercises the same model and adapter on 96 train and 48 dev
+pairs for one epoch. Its metrics are not evidence; the run only validates environment,
+CUDA, data loading, training, evaluation, and artifact manifests.
