@@ -16,6 +16,9 @@ class Settings(BaseSettings):
     env: str = "development"
     data_path: Path = Path("data/processed/bpom-cosmetics.csv")
     log_level: str = "INFO"
+    ocr_command: str = "tesseract"
+    ocr_language: str = "eng+ind"
+    ocr_timeout_seconds: int = 15
 
 
 @lru_cache
