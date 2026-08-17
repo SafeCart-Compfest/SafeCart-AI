@@ -16,6 +16,7 @@ def main() -> None:
     if not args.config.is_file():
         parser.error(f"Training config does not exist: {args.config}")
 
+    # Keep optional GPU dependencies out of the API runtime and normal CLI startup.
     from safecart_ai.matching.hf_training import run_training
 
     run_training(args.pairs, args.config, args.output)

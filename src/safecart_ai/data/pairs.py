@@ -53,6 +53,23 @@ class SplitLeakageError(ValueError):
     """Raised when a connected record group appears in multiple splits."""
 
 
+class _DisjointSet:
+    def __init__(self, size: int) -> None:
+        self._parent = list(range(size))
+
+    def find(self, index: int) -> int:
+        while self._parent[index] != index:
+            self._parent[index] = self._parent[self._parent[index]]
+            index = self._parent[index]
+        return index
+
+    def union(self, left: int, right: int) -> None:
+        left_root = self.find(left)
+        right_root = self.find(right)
+        if left_root != right_root:
+            self._parent[right_root] = left_root
+
+
 @dataclass(frozen=True, slots=True)
 class CatalogRecord:
     record_id: str
@@ -104,19 +121,7 @@ def _split_for(group_id: str, seed: int) -> DataSplit:
 
 
 def assign_splits(records: list[CatalogRecord], seed: int = 42) -> dict[str, SplitAssignment]:
-    parent = list(range(len(records)))
-
-    def find(index: int) -> int:
-        while parent[index] != index:
-            parent[index] = parent[parent[index]]
-            index = parent[index]
-        return index
-
-    def union(left: int, right: int) -> None:
-        left_root = find(left)
-        right_root = find(right)
-        if left_root != right_root:
-            parent[right_root] = left_root
+    groups = _DisjointSet(len(records))
 
     first_by_family: dict[str, int] = {}
     first_by_nie: dict[str, int] = {}
@@ -125,17 +130,17 @@ def assign_splits(records: list[CatalogRecord], seed: int = 42) -> dict[str, Spl
         family_id = product_family_id(record)
         families.append(family_id)
         if family_id in first_by_family:
-            union(index, first_by_family[family_id])
+            groups.union(index, first_by_family[family_id])
         else:
             first_by_family[family_id] = index
         if record.nie in first_by_nie:
-            union(index, first_by_nie[record.nie])
+            groups.union(index, first_by_nie[record.nie])
         else:
             first_by_nie[record.nie] = index
 
     record_ids_by_root: dict[int, list[str]] = defaultdict(list)
     for index, record in enumerate(records):
-        record_ids_by_root[find(index)].append(record.record_id)
+        record_ids_by_root[groups.find(index)].append(record.record_id)
     group_id_by_root = {
         root: _digest("|".join(sorted(record_ids)))[:20]
         for root, record_ids in record_ids_by_root.items()
@@ -144,8 +149,8 @@ def assign_splits(records: list[CatalogRecord], seed: int = 42) -> dict[str, Spl
     return {
         record.record_id: SplitAssignment(
             family_id=families[index],
-            group_id=group_id_by_root[find(index)],
-            split=_split_for(group_id_by_root[find(index)], seed),
+            group_id=group_id_by_root[groups.find(index)],
+            split=_split_for(group_id_by_root[groups.find(index)], seed),
         )
         for index, record in enumerate(records)
     }
