@@ -5,7 +5,7 @@ def test_settings_have_safe_local_defaults() -> None:
     settings = Settings()
 
     assert settings.env == "development"
-    assert str(settings.data_path).replace("\\", "/") == "data/sample"
+    assert str(settings.data_path).replace("\\", "/") == "data/processed/bpom-cosmetics.csv"
 
 
 def test_get_settings_is_cached() -> None:

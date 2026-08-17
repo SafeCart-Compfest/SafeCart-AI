@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     )
 
     env: str = "development"
-    data_path: Path = Path("data/sample")
+    data_path: Path = Path("data/processed/bpom-cosmetics.csv")
     log_level: str = "INFO"
 
 

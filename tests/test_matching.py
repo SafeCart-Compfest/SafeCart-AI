@@ -89,6 +89,26 @@ def test_no_official_record_is_high_priority_review() -> None:
     assert result.reason_codes == [ReasonCode.NIE_NOT_FOUND]
 
 
+def test_no_candidate_without_nie_requires_review() -> None:
+    result = assess_identity(
+        ProductIdentity(brand="Unknown", product_name="Unknown Product"),
+        [],
+    )
+
+    assert result.status is AssessmentStatus.REVIEW
+    assert result.reason_codes == [ReasonCode.NO_MATCHING_RECORD]
+
+
+def test_multiple_lexical_candidates_are_not_treated_as_nie_ambiguity() -> None:
+    result = assess_identity(
+        ProductIdentity(brand="LumiGlow", product_name="Intensive Night Cream"),
+        [official(), official(nie="NA00000000001", product_name="Other Product")],
+    )
+
+    assert result.status is AssessmentStatus.PASS_WITH_CURRENT_EVIDENCE
+    assert ReasonCode.OFFICIAL_RECORD_AMBIGUOUS not in result.reason_codes
+
+
 def test_nie_only_cannot_establish_identity_consistency() -> None:
     result = assess_identity(ProductIdentity(nie="NA18250116783"), [official()])
 

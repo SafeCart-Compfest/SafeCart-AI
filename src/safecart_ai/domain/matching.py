@@ -96,9 +96,10 @@ def assess_identity(
         )
 
     if not official_candidates:
+        has_nie = normalize_nie(listing.nie) is not None
         return IdentityAssessment(
-            status=AssessmentStatus.HIGH_PRIORITY_REVIEW,
-            reason_codes=[ReasonCode.NIE_NOT_FOUND],
+            status=(AssessmentStatus.HIGH_PRIORITY_REVIEW if has_nie else AssessmentStatus.REVIEW),
+            reason_codes=[ReasonCode.NIE_NOT_FOUND if has_nie else ReasonCode.NO_MATCHING_RECORD],
         )
 
     if not (listing.brand or listing.product_name or listing.package):
@@ -117,13 +118,18 @@ def assess_identity(
         item.reason for item in selected.evidence if item.reason is not ReasonCode.MATCH
     ]
     reasons: list[ReasonCode] = []
-    if len(official_candidates) > 1:
+    listing_nie = normalize_nie(listing.nie)
+    matching_nie_count = sum(
+        normalize_nie(candidate.official.nie) == listing_nie for candidate in assessed
+    )
+    record_is_ambiguous = listing_nie is not None and matching_nie_count > 1
+    if record_is_ambiguous:
         reasons.append(ReasonCode.OFFICIAL_RECORD_AMBIGUOUS)
     reasons.extend(mismatch_reasons)
 
     if mismatch_reasons:
         status = AssessmentStatus.HIGH_PRIORITY_REVIEW
-    elif len(official_candidates) > 1:
+    elif record_is_ambiguous:
         status = AssessmentStatus.REVIEW
     else:
         status = AssessmentStatus.PASS_WITH_CURRENT_EVIDENCE
