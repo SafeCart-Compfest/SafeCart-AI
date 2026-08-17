@@ -1,95 +1,76 @@
 # SafeCart AI
 
-Internal AI service and reproducible experimentation code for SafeCart, a
-marketplace product identity matching system for COMPFEST 18 AIC.
+AI service for matching product information from marketplace screenshots against
+versioned BPOM records. It compares listing identity only; it does not determine
+product authenticity, chemical safety, or legal status.
 
-SafeCart AI compares identity information extracted from a marketplace screenshot with
-versioned BPOM records. It does **not** determine whether a product is authentic, safe,
-or legal.
+## Features
 
-## Service boundary
+- Builds a normalized BPOM cosmetics catalog.
+- Reads PNG, JPEG, and WebP screenshots up to 10 MB with Tesseract OCR.
+- Extracts NIE, brand, product name, package, confidence, and text boxes.
+- Retrieves exact-NIE and similar BPOM candidates while preserving ambiguous records.
+- Compares listing fields with official records and returns deterministic reason codes.
+- Provides training and evaluation commands for the multilingual pair matcher.
 
-This repository owns:
-
-- BPOM source manifests, verification, normalization, and product catalog builders;
-- leakage-safe pair generation and retrieval evaluation;
-- OCR, entity extraction, matching, calibration, and model export code;
-- the private HTTP inference boundary used by `SafeCart-API`;
-- AI experiments, evaluation reports, and model documentation.
-
-It does not own the public assessment contract, frontend, scraping jobs, deployment
-composition, raw datasets, screenshots, or model weights. The PWA must call
-`SafeCart-API`, never this service directly.
-
-## Current pipeline
+## Pipeline
 
 ```text
-verified BPOM snapshots
-  -> normalized BPOM product catalog
-  -> product-family split
-  -> leakage-safe match and mismatch pairs
-  -> hybrid retrieval baseline
-  -> matcher, calibration, and decision rules
+screenshot -> OCR -> field extraction -> BPOM retrieval -> matching -> assessment
 ```
 
-The private image endpoint uses Tesseract to extract visible listing identity, retrieves
-BPOM candidates, and applies the deterministic baseline. The fine-tuned cross-encoder is
-added after its required checks pass.
+The service exposes:
 
-## Implementation status
+- `GET /health`
+- `POST /_internal/assessments` for structured product fields
+- `POST /_internal/image-assessments` for screenshots
 
-- [x] Build and validate the normalized BPOM catalog.
-- [x] Accept PNG, JPEG, and WebP listing screenshots up to 10 MB.
-- [x] Extract OCR text, confidence, and bounding boxes.
-- [x] Extract visible NIE, labeled brand and product name, and package size.
-- [x] Retrieve official BPOM candidates and preserve ambiguous records.
-- [x] Return an assessment status with deterministic reason codes.
-- [x] Expose the internal structured-text and image assessment endpoints.
-- [ ] Collect and review representative marketplace screenshots.
-- [ ] Fix extraction errors found in the reviewed screenshots.
-- [ ] Train and integrate the final pair-matching model.
-- [ ] Select decision thresholds without using the final test set.
-- [ ] Measure final accuracy, error rates, and end-to-end latency.
-- [ ] Freeze and checksum the selected model artifact.
-- [ ] Complete the AI-to-API integration test.
+`SafeCart-API` is the public HTTP entry point. The PWA does not call this service
+directly.
+
+## Status
+
+- [x] Catalog normalization and validation
+- [x] OCR and product-field extraction
+- [x] Candidate retrieval and ambiguity handling
+- [x] Deterministic matching, status, and reason codes
+- [x] Private structured-text and image endpoints
+- [ ] Review representative marketplace screenshots
+- [ ] Integrate the trained pair matcher
+- [ ] Calibrate thresholds and run final evaluation
+- [ ] Complete the API integration test
 
 ## Local development
 
-Requirements: Python 3.11-3.13 and [uv](https://docs.astral.sh/uv/).
+Requirements: Python 3.11-3.13, [uv](https://docs.astral.sh/uv/), and Tesseract.
 
 ```bash
 uv sync --extra dev
 uv run uvicorn safecart_ai.main:app --reload --port 8001
 ```
 
-Open `http://localhost:8001/docs` or check process health:
+Open `http://localhost:8001/docs` or run `curl http://localhost:8001/health`.
+
+## Data and training
+
+Raw datasets, screenshots, generated datasets, and model weights are not committed.
+Source metadata and checksums are stored in `data/manifests/` and
+`artifacts/manifests/`.
 
 ```bash
-curl http://localhost:8001/health
-```
-
-## Data workflow
-
-Raw sources and generated datasets are intentionally ignored by Git. Review
-`data/README.md` and the source manifests before running a builder.
-
-```bash
-uv run safecart-ai-verify-manifest data/manifests/bpom-source.json "../dataset/Data BPOM"
-uv run safecart-ai-audit-bpom "../dataset/Data BPOM" --output outputs/bpom-audit.json
+uv run safecart-ai-verify-manifest data/manifests/bpom-cosmetics-2026-08-17.json "../dataset/Data BPOM"
 uv run safecart-ai-build-catalog "../dataset/Data BPOM" \
-  --manifest data/manifests/bpom-source.json \
+  --manifest data/manifests/bpom-cosmetics-2026-08-17.json \
   --output data/processed/bpom-cosmetics.csv
 uv run safecart-ai-generate-pairs data/processed/bpom-cosmetics.csv \
   data/processed/product-pairs.csv --seed 42
-uv run safecart-ai-evaluate-retrieval data/processed/bpom-cosmetics.csv \
-  data/processed/product-pairs.csv --split dev \
-  --output outputs/retrieval-dev.json
 uv run safecart-ai-train-matcher data/processed/product-pairs.csv \
   --config training/configs/distilmbert-v1.toml \
   --output outputs/distilmbert-v1
 ```
 
-Do not use the final test split to choose features, models, or thresholds.
+See `docs/DATA.md`, `docs/EVALUATION.md`, and `training/README.md` for the remaining
+technical details.
 
 ## Validation
 
@@ -101,27 +82,4 @@ uv run pytest --cov=safecart_ai --cov-report=term-missing
 docker build -t safecart-ai .
 ```
 
-CI runs formatting, linting, strict type checking, branch coverage (minimum 85%),
-dependency auditing, and Docker build checks.
-
-## Docker
-
-```bash
-docker build -t safecart-ai .
-docker run --rm -p 8001:8001 safecart-ai
-```
-
-Cross-service orchestration belongs in `SafeCart-Deployment`; this repository provides
-only its independently deployable image.
-
-## Repository map
-
-- `src/safecart_ai/`: tested service and experiment implementation.
-- `tests/`: unit, contract, leakage, and scenario tests.
-- `training/`: thin Kaggle launchers and versioned training configurations.
-- `data/manifests/`: source, license, and integrity metadata.
-- `data/samples/`: small synthetic or explicitly redistributable fixtures.
-- `artifacts/manifests/`: model artifact metadata and checksums, never weights.
-- `docs/`: architecture, data, evaluation, and limitation documents.
-
-See `CONTRIBUTING.md` for the protected-branch workflow.
+See `CONTRIBUTING.md` for the pull-request workflow.

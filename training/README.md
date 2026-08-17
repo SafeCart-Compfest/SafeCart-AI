@@ -1,7 +1,9 @@
 # Training
 
-Kaggle provides compute; the tested `safecart_ai` package remains the source of truth.
-The training CLI:
+Kaggle provides GPU compute. Training logic remains in the tested `safecart_ai`
+package; the notebook only installs the package, verifies inputs, and calls the CLI.
+
+The training command:
 
 1. loads only the leakage-safe `train` and `dev` rows;
 2. applies a versioned sample cap and seed;
@@ -20,7 +22,6 @@ uv run safecart-ai-train-matcher /path/to/product-pairs.csv \
   --output /path/to/run-output
 ```
 
-The Transformers adapter is excluded from local line coverage because it requires the
-external model and accelerator stack. Pure serialization, configuration, and metric
-contracts are unit-tested in CI; the full adapter receives a Kaggle smoke run before a
-long training run is accepted.
+Use `distilmbert-smoke.toml` to verify the Kaggle environment before running
+`distilmbert-v1.toml`. Each run records its config, Git SHA, dataset checksum, seed,
+dependencies, metrics, failures, and output checksums. Model weights remain outside Git.
