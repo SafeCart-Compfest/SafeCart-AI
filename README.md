@@ -1,6 +1,6 @@
 # SafeCart AI
 
-Internal AI service and reproducible experimentation code for SafeCart, an
+Internal AI service and reproducible experimentation code for SafeCart, a
 marketplace product identity matching system for COMPFEST 18 AIC.
 
 SafeCart AI compares identity information extracted from a marketplace screenshot with
@@ -32,9 +32,9 @@ verified BPOM snapshots
   -> matcher, calibration, and decision rules
 ```
 
-The current private endpoint is a deterministic baseline used for integration and
-scenario tests. OCR and the fine-tuned cross-encoder will replace its client-supplied
-fixture input only after their required checks pass.
+The current private endpoint retrieves candidates from the BPOM catalog and applies the
+deterministic baseline. OCR and the fine-tuned cross-encoder are added after their
+required checks pass.
 
 ## Local development
 

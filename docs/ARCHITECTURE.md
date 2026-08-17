@@ -48,5 +48,5 @@ attaches source and snapshot metadata, and routes ambiguity to human review.
 - One synchronous private inference operation consumed only by `SafeCart-API`.
 - No authentication, background jobs, crawler, distributed database, or automatic
   takedown.
-- `/_internal/baseline/assessments` accepts structured candidates for baseline testing
-  only. It is not a public or production contract and must not be called by the PWA.
+- `/_internal/assessments` accepts structured listing identity from `SafeCart-API` and
+  retrieves BPOM candidates internally. It must not be called by the PWA.
