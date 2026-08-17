@@ -36,6 +36,23 @@ The private image endpoint uses Tesseract to extract visible listing identity, r
 BPOM candidates, and applies the deterministic baseline. The fine-tuned cross-encoder is
 added after its required checks pass.
 
+## Implementation status
+
+- [x] Build and validate the normalized BPOM catalog.
+- [x] Accept PNG, JPEG, and WebP listing screenshots up to 10 MB.
+- [x] Extract OCR text, confidence, and bounding boxes.
+- [x] Extract visible NIE, labeled brand and product name, and package size.
+- [x] Retrieve official BPOM candidates and preserve ambiguous records.
+- [x] Return an assessment status with deterministic reason codes.
+- [x] Expose the internal structured-text and image assessment endpoints.
+- [ ] Collect and review representative marketplace screenshots.
+- [ ] Fix extraction errors found in the reviewed screenshots.
+- [ ] Train and integrate the final pair-matching model.
+- [ ] Select decision thresholds without using the final test set.
+- [ ] Measure final accuracy, error rates, and end-to-end latency.
+- [ ] Freeze and checksum the selected model artifact.
+- [ ] Complete the AI-to-API integration test.
+
 ## Local development
 
 Requirements: Python 3.11-3.13 and [uv](https://docs.astral.sh/uv/).
