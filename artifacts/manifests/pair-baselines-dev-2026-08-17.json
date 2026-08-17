@@ -28,10 +28,10 @@
       "failure_summary": "Three positive pairs fail package normalization on multi-pack notation."
     }
   },
-  "decision": "Do not use synthetic-dev performance to justify fine-tuning; acquire real hard negatives and OCR-degraded listings before the bounded full run.",
+  "decision": "Do not use synthetic-dev performance to justify fine-tuning; acquire real mismatch and OCR-degraded listings before the bounded full run.",
   "limitations": [
     "Generated negatives are almost perfectly separable by NIE and deterministic fields.",
-    "The split contains canonical text pairs rather than real marketplace OCR output.",
-    "No calibration, synthetic-test, or gold-test row was used."
+    "The split contains normalized text pairs rather than real marketplace OCR output.",
+    "No calibration, synthetic-test, or real-listing evaluation row was used."
   ]
 }

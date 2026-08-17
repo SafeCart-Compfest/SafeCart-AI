@@ -24,8 +24,8 @@ calls AI directly, and the scraping repository is not on the runtime path.
 2. Entity extraction normalizes NIE, brand, product name, variant, and package.
 3. Retrieval returns every exact NIE match plus top lexical candidates.
 4. A fine-tuned cross-encoder predicts `MATCH` or `MISMATCH` for candidate pairs.
-5. Calibration and deterministic field evidence produce a confidence and reason codes.
-6. The private FastAPI adapter returns evidence to the public API orchestrator.
+5. Calibration and deterministic field comparisons produce a confidence and reason codes.
+6. The private FastAPI adapter returns the result to the public API orchestrator.
 
 ## Dependency direction
 

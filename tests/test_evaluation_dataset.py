@@ -4,22 +4,22 @@ from pathlib import Path
 
 import pytest
 
-from safecart_ai.cli.validate_gold_annotations import main as validate_annotations_main
-from safecart_ai.data.annotations import (
+from safecart_ai.cli.validate_evaluation_dataset import main as validate_dataset_main
+from safecart_ai.data.evaluation_dataset import (
     REQUIRED_COLUMNS,
-    AnnotationValidationError,
-    audit_annotations,
-    load_annotation_rows,
+    EvaluationDatasetError,
+    load_evaluation_rows,
+    validate_evaluation_dataset,
 )
 
 
-def annotation(
+def review(
     sample_id: str,
-    annotator_id: str,
+    reviewer_id: str,
     label: str,
     reason_codes: str,
     *,
-    annotation_round: str = "independent",
+    review_stage: str = "initial",
 ) -> dict[str, str]:
     row = {column: "" for column in REQUIRED_COLUMNS}
     row.update(
@@ -29,8 +29,8 @@ def annotation(
             "captured_at": "2026-08-18T09:00:00+07:00",
             "image_private_path": f"private/{sample_id}.png",
             "image_sha256": "a" * 64,
-            "annotator_id": annotator_id,
-            "annotation_round": annotation_round,
+            "reviewer_id": reviewer_id,
+            "review_stage": review_stage,
             "label": label,
             "reason_codes": reason_codes,
             "listing_nie": "NA123",
@@ -49,7 +49,7 @@ def annotation(
     return row
 
 
-def write_annotations(path: Path, rows: list[dict[str, str]]) -> None:
+def write_evaluation_dataset(path: Path, rows: list[dict[str, str]]) -> None:
     columns = sorted(REQUIRED_COLUMNS)
     with path.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=columns)
@@ -57,22 +57,22 @@ def write_annotations(path: Path, rows: list[dict[str, str]]) -> None:
         writer.writerows(rows)
 
 
-def test_audit_tracks_agreement_disagreement_and_adjudication() -> None:
+def test_validation_tracks_agreement_disagreement_and_resolution() -> None:
     rows = [
-        annotation("match", "a", "MATCH", "IDENTITY_CONSISTENT"),
-        annotation("match", "b", "MATCH", "IDENTITY_CONSISTENT"),
-        annotation("reviewed", "a", "MATCH", "IDENTITY_CONSISTENT"),
-        annotation("reviewed", "b", "MISMATCH", "PACKAGE_MISMATCH"),
-        annotation(
+        review("match", "a", "MATCH", "IDENTITY_CONSISTENT"),
+        review("match", "b", "MATCH", "IDENTITY_CONSISTENT"),
+        review("reviewed", "a", "MATCH", "IDENTITY_CONSISTENT"),
+        review("reviewed", "b", "MISMATCH", "PACKAGE_MISMATCH"),
+        review(
             "reviewed",
             "judge",
             "MISMATCH",
             "PACKAGE_MISMATCH",
-            annotation_round="adjudication",
+            review_stage="resolution",
         ),
     ]
 
-    result = audit_annotations(rows)
+    result = validate_evaluation_dataset(rows)
 
     assert result["completed_samples"] == 2
     assert result["final_label_counts"] == {
@@ -80,25 +80,25 @@ def test_audit_tracks_agreement_disagreement_and_adjudication() -> None:
         "MATCH": 1,
         "MISMATCH": 1,
     }
-    assert result["independent_agreements"] == 1
-    assert result["independent_disagreements"] == 1
-    assert result["adjudicated_disagreements"] == 1
-    assert result["raw_agreement_rate"] == 0.5
+    assert result["review_agreements"] == 1
+    assert result["review_disagreements"] == 1
+    assert result["resolved_disagreements"] == 1
+    assert result["agreement_rate"] == 0.5
 
 
-def test_audit_reports_incomplete_work_without_dividing_by_zero() -> None:
-    result = audit_annotations([annotation("pending", "a", "MATCH", "IDENTITY_CONSISTENT")])
+def test_validation_reports_incomplete_work_without_dividing_by_zero() -> None:
+    result = validate_evaluation_dataset([review("pending", "a", "MATCH", "IDENTITY_CONSISTENT")])
 
     assert result["completed_samples"] == 0
     assert result["incomplete_sample_ids"] == ["pending"]
-    assert result["raw_agreement_rate"] == 0.0
+    assert result["agreement_rate"] == 0.0
 
 
 @pytest.mark.parametrize(
     ("field", "value", "message"),
     [
         ("label", "UNKNOWN", "unsupported label"),
-        ("annotation_round", "first", "unsupported annotation_round"),
+        ("review_stage", "first", "unsupported review_stage"),
         ("image_sha256", "bad", "invalid image_sha256"),
         ("captured_at", "yesterday", "ISO 8601"),
         ("reason_codes", "MADE_UP", "unsupported reason codes"),
@@ -106,43 +106,43 @@ def test_audit_reports_incomplete_work_without_dividing_by_zero() -> None:
         ("readability", "GOOD", "unsupported readability"),
     ],
 )
-def test_audit_rejects_invalid_row_values(field: str, value: str, message: str) -> None:
-    row = annotation("sample", "a", "MATCH", "IDENTITY_CONSISTENT")
+def test_validation_rejects_invalid_row_values(field: str, value: str, message: str) -> None:
+    row = review("sample", "a", "MATCH", "IDENTITY_CONSISTENT")
     row[field] = value
 
-    with pytest.raises(AnnotationValidationError, match=message):
-        audit_annotations([row])
+    with pytest.raises(EvaluationDatasetError, match=message):
+        validate_evaluation_dataset([row])
 
 
-def test_audit_rejects_inconsistent_provenance_and_extra_adjudication() -> None:
+def test_validation_rejects_inconsistent_source_and_extra_resolution() -> None:
     rows = [
-        annotation("sample", "a", "MATCH", "IDENTITY_CONSISTENT"),
-        annotation("sample", "b", "MISMATCH", "NIE_MISMATCH"),
-        annotation(
+        review("sample", "a", "MATCH", "IDENTITY_CONSISTENT"),
+        review("sample", "b", "MISMATCH", "NIE_MISMATCH"),
+        review(
             "sample",
             "judge-a",
             "MISMATCH",
             "NIE_MISMATCH",
-            annotation_round="adjudication",
+            review_stage="resolution",
         ),
-        annotation(
+        review(
             "sample",
             "judge-b",
             "MISMATCH",
             "NIE_MISMATCH",
-            annotation_round="adjudication",
+            review_stage="resolution",
         ),
     ]
-    with pytest.raises(AnnotationValidationError, match="at most one"):
-        audit_annotations(rows)
+    with pytest.raises(EvaluationDatasetError, match="at most one"):
+        validate_evaluation_dataset(rows)
 
     rows = rows[:2]
     rows[1]["image_sha256"] = "b" * 64
-    with pytest.raises(AnnotationValidationError, match="inconsistent image_sha256"):
-        audit_annotations(rows)
+    with pytest.raises(EvaluationDatasetError, match="inconsistent image_sha256"):
+        validate_evaluation_dataset(rows)
 
 
-def test_freeze_requires_complete_target_composition() -> None:
+def test_final_validation_requires_complete_target_composition() -> None:
     rows: list[dict[str, str]] = []
     targets = [
         ("MATCH", "IDENTITY_CONSISTENT", 50),
@@ -155,18 +155,18 @@ def test_freeze_requires_complete_target_composition() -> None:
             sample_id = f"sample-{sample_number:03d}"
             rows.extend(
                 [
-                    annotation(sample_id, "a", label, reason),
-                    annotation(sample_id, "b", label, reason),
+                    review(sample_id, "a", label, reason),
+                    review(sample_id, "b", label, reason),
                 ]
             )
             sample_number += 1
 
-    result = audit_annotations(rows, freeze=True)
+    result = validate_evaluation_dataset(rows, final=True)
 
     assert result["samples"] == 120
-    assert result["freeze_validated"] is True
-    with pytest.raises(AnnotationValidationError, match="composition mismatch"):
-        audit_annotations(rows[:-2], freeze=True)
+    assert result["final_validation_passed"] is True
+    with pytest.raises(EvaluationDatasetError, match="composition mismatch"):
+        validate_evaluation_dataset(rows[:-2], final=True)
 
 
 def test_load_and_cli_validation(
@@ -174,22 +174,22 @@ def test_load_and_cli_validation(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    path = tmp_path / "annotations.csv"
+    path = tmp_path / "evaluation-dataset.csv"
     rows = [
-        annotation("sample", "a", "MATCH", "IDENTITY_CONSISTENT"),
-        annotation("sample", "b", "MATCH", "IDENTITY_CONSISTENT"),
+        review("sample", "a", "MATCH", "IDENTITY_CONSISTENT"),
+        review("sample", "b", "MATCH", "IDENTITY_CONSISTENT"),
     ]
-    write_annotations(path, rows)
+    write_evaluation_dataset(path, rows)
 
-    assert len(load_annotation_rows(path)) == 2
+    assert len(load_evaluation_rows(path)) == 2
     monkeypatch.setattr(
         sys,
         "argv",
-        ["safecart-ai-validate-gold-annotations", str(path)],
+        ["safecart-ai-validate-evaluation-dataset", str(path)],
     )
-    validate_annotations_main()
+    validate_dataset_main()
     assert '"completed_samples": 1' in capsys.readouterr().out
 
     path.write_text("sample_id\nonly\n", encoding="utf-8")
-    with pytest.raises(AnnotationValidationError, match="missing required columns"):
-        load_annotation_rows(path)
+    with pytest.raises(EvaluationDatasetError, match="missing required columns"):
+        load_evaluation_rows(path)

@@ -8,17 +8,17 @@
 - 364,133 rows are labeled `Kosmetik`.
 - 275,415 unique cosmetic NIE strings.
 - 88,523 exact repeated cosmetic business records after ignoring source row IDs;
-  canonical normalization collapses 88,551 rows in total.
-- 164 NIE values map to more than one canonical identity tuple. A raw stripped-string
+  record normalization collapses 88,551 rows in total.
+- 164 NIE values map to more than one normalized identity tuple. A raw stripped-string
   audit produces 165 because one formatting-only package difference disappears during
   normalization; an older 192 figure used a different signature and is retired. The
-  canonical tuple is `(product_name, brand, package, registrant)` and is implemented once
+  identity tuple is `(product_name, brand, package, registrant)` and is implemented once
   in `safecart_ai.data.bpom.identity_signature` for auditing and catalog construction.
 - At least one ambiguity (`NA18241700093`) was also visible in the public Cek BPOM
   portal during the audit.
 
-The files are useful for retrieval, hard-negative discovery, and schema exploration.
-They are not automatically accepted as clean labels. Record-level provenance, snapshot
+The files are useful for retrieval, mismatch-case discovery, and schema exploration.
+They are not automatically accepted as clean labels. Record-level source data, snapshot
 date, extraction method, permission/license, and reconciliation policy are still needed.
 
 ### Roboflow counterfeit medicine detection
@@ -49,7 +49,7 @@ before any training or public release.
 
 The supplied Kaggle dataset URL returned a not-found page during the audit. Publication
 visibility and a stable versioned download must be fixed before it can serve as
-submission provenance.
+submission traceability.
 
 ### BPOM image collections
 
@@ -62,7 +62,7 @@ URL, publication date, and meaning of each category.
 Each example must contain:
 
 ```text
-listing identity + official candidate(s) + pair label + reason codes + provenance
+listing identity + official candidate(s) + pair label + reason codes + source metadata
 ```
 
 Required label states are `MATCH`, `MISMATCH`, and `INSUFFICIENT_EVIDENCE`. Mismatch
@@ -71,14 +71,14 @@ ambiguity.
 
 ## Split policy
 
-- Split by product family or canonical SKU before generating mutations.
+- Split by product family or normalized SKU before generating mutations.
 - Keep every augmentation and mutation of one source product in one split.
 - Maintain a real, manually reviewed, unseen-listing test set.
-- Synthetic hard negatives may train the model but may not be the only headline test.
-- Report results separately for exact matches, hard negatives, OCR degradation,
+- Synthetic mismatch cases may train the model but may not be the only headline test.
+- Report results separately for exact matches, mismatch cases, OCR degradation,
   ambiguous official records, and unseen brands/products.
 
 The seed-42 generated-pair profile contains 826,746 rows at a 1:2 positive-to-negative
 ratio. Product-family and shared-NIE connections are formed before hashing groups into
 splits; validation found zero connected-group or family leakage. These synthetic pairs
-support training and ablations but do not replace the frozen 120-listing gold test set.
+support training and ablations but do not replace the final 120-listing evaluation set.

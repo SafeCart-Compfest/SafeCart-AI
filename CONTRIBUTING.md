@@ -24,7 +24,7 @@
 Examples:
 
 ```text
-feat(matching): add hard-negative pair classifier
+feat(matching): add mismatch pair classifier
 fix(data): prevent product-family leakage across splits
 experiment(retrieval): compare BM25 and multilingual embeddings
 docs(methodology): record OCR ablation results
