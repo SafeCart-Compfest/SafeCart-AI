@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 REPOSITORY_URL = "https://github.com/SafeCart-Compfest/SafeCart-AI.git"
-GIT_SHA = "1bcbe4c19723f91d449001fc7a1e2f35f9d91f8f"
+GIT_SHA = "4c406c7e7db005c1eb15fd0bef3de5f676ebe1ef"
 EXPECTED_PAIRS_SHA256 = "a2016a60458c3bed4edcc8ad5902ead2dd2f615ebcc2f0166956829ee4ba42f1"
 KAGGLE_INPUT_PATH = Path("/kaggle/input")
 REPOSITORY_PATH = Path("/kaggle/working/SafeCart-AI")
